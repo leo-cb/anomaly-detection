@@ -69,16 +69,19 @@ if not os.path.isfile(file):
 
 # load file
 df = pd.read_csv(file)
+
+if len(df.columns) != 1:
+    raise Exception("The input file must have exactly one column.")
+
+# convert to numeric and ignore non-numeric values
+df = pd.to_numeric(df, errors='coerce')
+
+# check for NA values
+if df.isnull().values.any():
+    print("Non-numeric or NA values found and ignored.")
+
+# drop NA values
 df = df.dropna()
-
-if len(df.columns) > 1:
-    raise ValueError("The input file must have only one column.")
-
-# convert to numeric
-try:
-    df = df.apply(pd.to_numeric)
-except Exception as e:
-    print(f"Failure converting values to numeric. Make sure every value is a number: {str(e)}")
 
 # convert df to numpy array
 data = df.to_numpy()

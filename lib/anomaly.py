@@ -121,33 +121,3 @@ def detect_anomalies_one_class_svm(data, nu=0.1):
 
 def detect_anomalies_stdev(data,threshold=2):
     return np.where(np.abs(data - np.median(data)) >  threshold*np.std(data))[0]
-
-def auto_stationarity(data):
-
-    # find min p-value by using all the stationarity methods
-    min_p_value = p_value
-    min_index = None
-    min_data = None
-
-    for i in range(len(funcs_stationarity)):
-        data_transf = funcs_stationarity[i][0](data)
-        p_value = adfuller(data_transf)[1]
-
-        if p_value < min_p_value:
-            min_p_value = p_value
-            min_index = i
-            min_data = data_transf
-
-    # transformation performed
-    if not min_index is None:
-        data = min_data
-        stationarity_func_used = min_index
-        offset_data = funcs_stationarity[min_index][1]
-
-        # print results given min p-value
-        if min_p_value <= 0.05:
-            print(f"Time-series is now likely stationary by applying '{funcs_stationarity[min_index][2]}' function (p-value = {min_p_value}).")
-        else:
-            print(f"WARNING: unable to automatically make the time-series stationary (p-value = {min_p_value}). Using the lowest ADF p-value associated method: '{funcs_stationarity[min_index][2]}' function...")
-    else: # no transformation performed
-        print(f"WARNING: unable to automatically make the time-series stationary (p-value = {min_p_value}). Using the original time-series...")
