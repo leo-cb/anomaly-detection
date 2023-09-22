@@ -10,15 +10,15 @@ def detect_anomalies_autoencoder(data:np.array,
         def __init__(self,n):
             super(Autoencoder, self).__init__()
             self.encoder = nn.Sequential(
-                nn.Linear(n, 128),
+                nn.Linear(n, min(128, int(n/3))),
                 nn.ReLU(),
-                nn.Linear(128, 64),
+                nn.Linear(min(128, int(n/3)), min(64, int(n/6))),
                 nn.ReLU(),
             )
             self.decoder = nn.Sequential(
-                nn.Linear(64, 128),
+                nn.Linear(min(64, int(n/6)), min(128, int(n/3))),
                 nn.ReLU(),
-                nn.Linear(128, n),
+                nn.Linear(min(128, int(n/3)), n),
                 nn.Sigmoid()
             )
 
