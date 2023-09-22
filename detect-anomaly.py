@@ -48,13 +48,13 @@ contamination_lof = args.contamination_lof
 threshold_stdev = args.threshold_stdev
 
 # validate contamination parameters
-if 'isolation_forest' in anomaly_algorithm and contamination_isolation_forest != "auto":
+if ('isolation_forest' in anomaly_algorithm or 'all' in anomaly_algorithm) and contamination_isolation_forest != "auto":
     try:
         contamination_isolation_forest = float(contamination_isolation_forest)
     except Exception as e:
         raise ValueError(f"contamination_isolation_forest must either be 'auto' or a float in the range (0,0.5]: {str(e)}")
     
-if 'lof' in anomaly_algorithm and contamination_lof != "auto":
+if ('lof' in anomaly_algorithm or 'all' in anomaly_algorithm) in anomaly_algorithm and contamination_lof != "auto":
     try:
         contamination_lof = float(contamination_lof)
     except Exception as e:
@@ -107,9 +107,9 @@ if check_stationarity:
     if not auto_stationarity:
         if p_value > 0.05:
             print(f"WARNING: the provided time-series is likely not stationary (ADF test p-value = {p_value}).\
-    These anomaly detection algorithms will not perform well on non-stationary data.\
-    Attempt to difference the time-series, compute the returns or use other methods\
-    to make the time-series stationary before running this script.")
+These anomaly detection algorithms will not perform well on non-stationary data.\
+Attempt to difference the time-series, compute the returns or use other methods\
+to make the time-series stationary before running this script.")
     elif p_value > 0.05: # attempt to make time-series stationary
 
         # find min p-value by using all the stationarity methods
@@ -140,29 +140,39 @@ if check_stationarity:
         else: # no transformation performed
             print(f"WARNING: unable to automatically make the time-series stationary (p-value = {min_p_value}). Using the original time-series...")
 
-# anomaly detection
-anomalies_stdev = detect_anomalies_stdev(data,threshold_stdev) + [offset_data]
-anomalies_autoencoder = detect_anomalies_autoencoder(data,threshold_autoencoder) + [offset_data]
-anomalies_if = detect_anomalies_isolation_forest(data.reshape(-1, 1),contamination=contamination_isolation_forest) + [offset_data]
-anomalies_lof = detect_anomalies_lof(data.reshape(-1, 1),contamination=contamination_lof) + [offset_data]
+# define the anomaly detection functions with their respective arguments
+anomaly_detectors = {
+    'stdev': (detect_anomalies_stdev, [data, threshold_stdev]),
+    'autoencoder': (detect_anomalies_autoencoder, [data, threshold_autoencoder]),
+    'isolation_forest': (detect_anomalies_isolation_forest, [data.reshape(-1, 1), contamination_isolation_forest]),
+    'lof': (detect_anomalies_lof, [data.reshape(-1, 1), contamination_lof])
+}
 
-print(f"Anomalies detected with standard deviation method = {anomalies_stdev}")
-print(f"Anomalies detected with autoencoder = {anomalies_autoencoder}")
-print(f"Anomalies detected with isolation forest = {anomalies_if}")
-print(f"Anomalies detected with local outlier factor = {anomalies_lof}")
+# initialize a dictionary to store the anomalies detected by each method
+anomalies = {}
 
-# intersection
-set_stdev = set(anomalies_stdev)
-set_autoencoder = set(anomalies_autoencoder)
-set_if = set(anomalies_if)
-set_lof = set(anomalies_lof)
+# loop over the selected anomaly detection methods
+for method in anomaly_algorithm:
+    # if 'all' is selected, apply all methods
+    if method == 'all':
+        for name, (func, args) in anomaly_detectors.items():
+            anomalies[name] = func(*args) + [offset_data]
+        
+        break
+    # otherwise, apply only the selected methods
+    elif method in anomaly_detectors:
+        func, args = anomaly_detectors[method]
+        anomalies[method] = func(*args) + [offset_data]
 
-# find values that appear in two or more sets
-common_values = list(set.intersection(set_stdev, set_autoencoder, set_if, set_lof))
+# print the anomalies detected by each method
+for name, anomaly in anomalies.items():
+    print(f"Anomalies detected with {name} method = {anomaly}")
 
-print(f"Interception points between all methods = {sorted(common_values)}")
+# find the common anomalies detected by all methods
+common_anomalies = set.intersection(*[set(anom) for anom in anomalies.values()])
+print(f"Common anomalies detected by all methods: {sorted(common_anomalies)}")
 
-# common elements
+# function to find common elements between 2 or more methods
 def find_common_elements(min_common, *arrays):
     # Combine all arrays into one
     combined = np.concatenate(arrays)
@@ -175,6 +185,6 @@ def find_common_elements(min_common, *arrays):
 
     return common_elements
 
-common_elements = list(find_common_elements(2, anomalies_autoencoder, anomalies_if, anomalies_lof, anomalies_stdev))
-
+# find common elements between 2 or more methods
+common_elements = list(find_common_elements(2, *anomalies.values()))
 print(f"Common elements between 2 or more methods: {sorted(common_elements)}")
