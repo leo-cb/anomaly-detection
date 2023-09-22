@@ -51,12 +51,16 @@ threshold_stdev = args.threshold_stdev
 if ('isolation_forest' in anomaly_algorithm or 'all' in anomaly_algorithm) and contamination_isolation_forest != "auto":
     try:
         contamination_isolation_forest = float(contamination_isolation_forest)
+        if contamination_isolation_forest <= 0 or contamination_isolation_forest > 0.5:
+            raise ValueError(f"contamination_isolation_forest must be in the range (0,0.5]: {contamination_isolation_forest}")
     except Exception as e:
         raise ValueError(f"contamination_isolation_forest must either be 'auto' or a float in the range (0,0.5]: {str(e)}")
     
 if ('lof' in anomaly_algorithm or 'all' in anomaly_algorithm) in anomaly_algorithm and contamination_lof != "auto":
     try:
         contamination_lof = float(contamination_lof)
+        if contamination_lof <= 0 or contamination_lof > 0.5:
+            raise ValueError(f"contamination_lof must be in the range (0,0.5]: {contamination_lof}")
     except Exception as e:
         raise ValueError(f"contamination_lof must either be 'auto' or a float in the range (0,0.5]: {str(e)}")
 
