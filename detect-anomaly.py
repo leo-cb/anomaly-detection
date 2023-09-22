@@ -72,20 +72,30 @@ if not os.path.isfile(file):
     raise FileNotFoundError("Unable to find the input file.")
 
 # load file
-df = pd.read_csv(file)
+df = pd.read_csv(file,header=None)
 
 if len(df.columns) != 1:
     raise Exception("The input file must have exactly one column.")
 
 # convert to numeric and ignore non-numeric values
-df = pd.to_numeric(df, errors='coerce')
+len_before = len(df)
+df = pd.to_numeric(df.squeeze(), errors='coerce')
+len_after = len(df)
+
+if len_before > len_after:
+    print(f"Removed {len_before - len_after} rows with non-numeric values.")
 
 # check for NA values
 if df.isnull().values.any():
     print("Non-numeric or NA values found and ignored.")
 
 # drop NA values
+len_before = len(df)
 df = df.dropna()
+len_after = len(df)
+if len_before > len_after:
+    print(f"Removed {len_before - len_after} rows with NA values.")
+
 
 # convert df to numpy array
 data = df.to_numpy()
@@ -157,6 +167,9 @@ anomaly_detectors = {
 
 # initialize a dictionary to store the anomalies detected by each method
 anomalies = {}
+
+print(f"offset data = {offset_data}")
+offset_data = 0
 
 # loop over the selected anomaly detection methods
 for method in anomaly_algorithm:
