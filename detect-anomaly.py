@@ -25,14 +25,14 @@ def difference_twice(arr : np.array) -> np.array:
 # create parser and add arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--file', type=str, required=True, help='Input the file path to a one-column csv file with no header with time-series values.')
-parser.add_argument('--check_stationarity', type=bool, default=True)
-parser.add_argument('--auto_stationarity', type=bool, default=True)
+parser.add_argument('--check_stationarity', type=bool, default=True, help="If set to True, program checks for a trend in the time-series.")
+parser.add_argument('--auto_stationarity', type=bool, default=True, help="If set to True, program attempts to de-trend time-series if a trend is detected.")
 parser.add_argument('--anomaly_algorithm', nargs='+', default=["all"], choices=['all', 'autoencoder', 'isolation_forest', 'lof', 'stdev'], 
                     help='Choose one or more anomaly detection algorithms. Options are: "all", "autoencoder", "isolation_forest", "lof", "stdev"')
-parser.add_argument('--threshold_autoencoder', type=float, default=2)
-parser.add_argument('--contamination_isolation_forest', type=str, default="auto")
-parser.add_argument('--contamination_lof', type=str, default="auto")
-parser.add_argument('--threshold_stdev', type=float, default=2)
+parser.add_argument('--threshold_autoencoder', type=float, default=2, help="Multiplier of data's standard deviation above the mean loss to consider data point as an anomaly.")
+parser.add_argument('--contamination_isolation_forest', type=str, default="auto", help='Contamination parameter for isolation forest. Options are: "auto", or a number between ]0,0.5].')
+parser.add_argument('--contamination_lof', type=str, default="auto", help='Contamination parameter for LOF. Options are: "auto", or a number between ]0,0.5].')
+parser.add_argument('--threshold_stdev', type=float, default=2, help="Multiplier of data's standard deviation above the median to consider data point as an anomaly.")
 
 # parse arguments
 args = parser.parse_args()
